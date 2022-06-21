@@ -12,6 +12,9 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -148,6 +151,41 @@ public class ProductReviewsTest {
                         Objects.requireNonNull(result.getResolvedException()).getMessage()));
     }
 
+    public void ThreadAddReviewTest() throws Exception {
+        mvc.perform(post("/product")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"description\": \"description\"}"));
+
+        int threadsAmount = 5, reviewsAmount = 20;
+        ExecutorService pool = Executors.newFixedThreadPool(threadsAmount);
+        CountDownLatch latch = new CountDownLatch(reviewsAmount);
+        StringBuilder reviewList = new StringBuilder();
+        for (int i = 0; i < reviewsAmount; i++) {
+            pool.submit(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        mvc.perform(post("/product/3/review")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"message\":\"message\", \"rating\":5}"));
+                        latch.countDown();
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            });
+            if (i != 0) reviewList.append(",");
+            reviewList.append("{\"id\":").append(i + 5).append(",\"message\":\"message\",\"rating\":5,\"productId\":3}");
+
+        }
+        latch.await();
+
+        String content = "{\"id\":3,\"description\":\"description\",\"reviewList\":[" + reviewList + "],\"meanRating\":5.0}";
+        mvc.perform(get("/product/3"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(content));
+    }
+
     @Test
     public void Test() throws Exception {
         createProductTest();
@@ -158,5 +196,7 @@ public class ProductReviewsTest {
         getProductErrorTest();
         deleteProductTest();
         deleteErrorProductTest();
+
+        ThreadAddReviewTest();
     }
 }

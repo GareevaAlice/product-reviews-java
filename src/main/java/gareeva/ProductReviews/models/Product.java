@@ -20,8 +20,6 @@ public class Product {
     @JoinColumn(name = "productId")
     private List<Review> reviewList = new ArrayList<>();
 
-    private long sumRating = 0;
-
     public long getId() {
         return id;
     }
@@ -37,11 +35,6 @@ public class Product {
         this.description = description;
     }
 
-    public void addReview(Review review) {
-        this.reviewList.add(review);
-        this.sumRating += review.getRating();
-    }
-
     public List<Review> getReviewList() {
         return reviewList;
     }
@@ -50,6 +43,6 @@ public class Product {
         if (reviewList.size() == 0) {
             return 0;
         }
-        return (double) sumRating / reviewList.size();
+        return reviewList.stream().mapToDouble(Review::getRating).sum() / reviewList.size();
     }
 }
