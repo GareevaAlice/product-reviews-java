@@ -10,10 +10,12 @@ import java.util.Objects;
 @Table
 public class Product {
     @Id
+    @Column
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
     @NotNull
+    @Column
     private String description;
 
     @OneToMany

@@ -8,6 +8,7 @@ import java.util.Objects;
 @Table
 public class Review {
     @Id
+    @Column
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
@@ -19,6 +20,8 @@ public class Review {
     @Column
     private int rating;
 
+    @NotNull
+    @Column
     private long productId;
 
     public long getId() {
